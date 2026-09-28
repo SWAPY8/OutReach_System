@@ -6,7 +6,7 @@ from app.core.config import settings
 
 def get_customer_url(qr_token: str, base_url: str = None) -> str:
     """Returns the full public customer review URL for a QR token."""
-    base = base_url.rstrip("/") if base_url else settings.FRONTEND_BASE_URL.rstrip("/")
+    base = base_url.rstrip("/") if base_url else settings.clean_frontend_base_url
     return f"{base}/r/{qr_token}"
 
 def generate_qr_base64(url: str) -> str:
