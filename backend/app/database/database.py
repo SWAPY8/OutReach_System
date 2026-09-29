@@ -2,6 +2,15 @@
 MongoDB database connection module.
 Provides a PyMongo client, database reference, and FastAPI dependency.
 """
+try:
+    import dns.resolver
+    _resolver = dns.resolver.get_default_resolver()
+    for _ns in ["8.8.8.8", "1.1.1.1"]:
+        if _ns not in _resolver.nameservers:
+            _resolver.nameservers.append(_ns)
+except Exception:
+    pass
+
 from pymongo import MongoClient
 from pymongo.database import Database
 from app.core.config import settings

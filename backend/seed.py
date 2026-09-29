@@ -42,10 +42,12 @@ def seed_database():
 
         # 2. Seed Dhankranti Demo Shop
         google_review_url = (
-            "https://www.google.com/search?hl=en-IN&gl=in&q=Dhankranti+share+Market+classes,"
-            "+Dhankranti+share+market+,+Bhadale+complex,+Near+KK+care+Hospital+Tapkir+Chowk,"
-            "Bhosari+alandi+Road,+Wadmukhwadi+412105+PCMC,+Pune,+Maharashtra+412105"
-            "&ludocid=8701389214391986374&lsig=AB86z5XloSRd8OQU2a74Jay27TVo#lrd=0x3bc2c747e4044c15:0x78c18b63783fe8c6,3"
+            "https://www.google.com/search?sca_esv=d1654259742c7a2c&hl=en-IN&gl=in"
+            "&sxsrf=APpeQntYSlpi5mTygB41ORDJ-bfUNifT8A:1790704402100"
+            "&q=dhankranti+share+market+classes+pune+reviews"
+            "&uds=AJ5uw1_zUrbZRllDIxmaohRRXzHy6cFHIledNPTth2HJ2EDNDHbrZENg4lAfIbuPtAmajgfjucmzrHARg9idCZnqYNCteugMKY28A_ns3Wa33jUCciKbto7cEsdeg9KB4A6r2V_MtG19G7W2XoisbjtqQei36DAxuhNyzA48k6mx3WB8QNDMgxm9DkxcOvbA11fk0ZXmcW3sIuvb9XpDiNQOPmm7ocD5Pch4vpBaQ0XdrTtx2MssKay5wgIW5oEsjGKySJoykMA7Mwx5bwjrUuL-YZQLYOs5rfC7nljxjRAkC5hnScNyrtXJSZLcgYhVAKIWEAYs_JHDkDcme5oFyGrd5aLEVZQnqJ0Kqp_FkUV3rrG-jCjN530igQWWA73u_bFSJZWAd3umE4R4ccUoPPbqvydwzoEgXA"
+            "&si=APenkKm7iecQ4G6P-TsbSMFKIQtv3EFIqRAFw-i8uEbk55Z-_2A0yRCjvQ_PL0E_pHK0fh2ocGj8MB8m2Mx805ue5chOC-MdZwCnmdc3xyXzDjqB9yBbijhi_v_5BiQD9l_QnpkuTOd08krswi_bCogpLQXg8d2D-ZYV1PBoM2s22NVMbZ6Z9hA%3D"
+            "&sa=X&ved=2ahUKEwign6PerZSXAxWncGwGHf6PBlwQk8gLegQIGhAB&ictx=1#ebo=3"
         )
 
         now = datetime.now(timezone.utc)
@@ -276,28 +278,27 @@ def seed_database():
 
             cat_id = cat["_id"]
 
-            # Clear any outdated reviews for this category & shop to avoid duplicates
-            db.review_templates.delete_many({
-                "shop_id": shop_id,
-                "category_id": cat_id
-            })
-
-            # Seed 10 reviews
-            review_docs = []
+            # Seed 10 reviews per category idempotently (check-before-insert)
             for rev_text in cat_info["reviews"]:
-                review_docs.append({
+                existing_rev = db.review_templates.find_one({
                     "shop_id": shop_id,
                     "category_id": cat_id,
-                    "review_text": rev_text,
-                    "is_active": True,
-                    "created_at": now,
-                    "updated_at": now
+                    "review_text": rev_text
                 })
-            if review_docs:
-                db.review_templates.insert_many(review_docs)
-                total_reviews_seeded += len(review_docs)
+                if not existing_rev:
+                    db.review_templates.insert_one({
+                        "shop_id": shop_id,
+                        "category_id": cat_id,
+                        "review_text": rev_text,
+                        "is_active": True,
+                        "created_at": now,
+                        "updated_at": now
+                    })
+                total_reviews_seeded += 1
 
-        print(f"Dhankranti seed completed! Exactly {len(target_categories)} categories and {total_reviews_seeded} review templates.")
+        # Verify exact counts
+        final_review_count = db.review_templates.count_documents({"shop_id": shop_id})
+        print(f"Dhankranti seed completed! Exactly {len(target_categories)} categories and {final_review_count} review templates.")
         print(f"Shop: {shop['name']} (QR Token: {shop.get('qr_token', 'dhankranti')})")
         print(f"Customer URL: http://localhost:5173/r/{shop.get('qr_token', 'dhankranti')}")
 
