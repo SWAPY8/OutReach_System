@@ -1,7 +1,12 @@
-from app.models.admin import Admin
-from app.models.shop import Shop
-from app.models.category import Category
-from app.models.review import ReviewTemplate
-from app.models.review_session import ReviewSession
+"""
+MongoDB collection name constants and helper utilities.
+With MongoDB/PyMongo, we don't need ORM model classes.
+Collections are accessed directly via db["collection_name"].
+"""
 
-__all__ = ["Admin", "Shop", "Category", "ReviewTemplate", "ReviewSession"]
+# Collection name constants
+ADMINS = "admins"
+SHOPS = "shops"
+CATEGORIES = "categories"
+REVIEW_TEMPLATES = "review_templates"
+REVIEW_SESSIONS = "review_sessions"

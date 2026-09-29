@@ -55,11 +55,10 @@ STUDENT PASTES & SUBMITS
 
 ### Backend
 - **Python 3.13** + **FastAPI** (High-performance asynchronous REST API)
-- **SQLAlchemy 2.0** (ORM with relational modeling)
+- **MongoDB Atlas** (Cloud NoSQL database with PyMongo client and automatic indexing)
 - **Pydantic v2** (Strict schema validation)
 - **Bcrypt** (Secure one-way password hashing)
 - **PyJWT** (Signed JWT bearer token authentication)
-- **SQLite** (Zero-configuration file-based database at `backend/data/review_app.db`)
 
 ---
 
@@ -70,16 +69,16 @@ OutReach_System/
 ├── backend/
 │   ├── app/
 │   │   ├── core/
-│   │   │   ├── config.py             # App settings, DB path, CORS origins
+│   │   │   ├── config.py             # App settings, MongoDB URI, CORS origins
 │   │   │   └── security.py           # Bcrypt hashing, JWT tokens, random tokens
 │   │   ├── database/
-│   │   │   └── database.py           # SQLAlchemy SQLite engine, SessionLocal, get_db
+│   │   │   └── database.py           # PyMongo client, ensure_indexes, get_db
 │   │   ├── models/
-│   │   │   ├── admin.py              # Admin table (name, email, password_hash)
-│   │   │   ├── shop.py               # Shop table (name, slug, review_url, qr_token)
-│   │   │   ├── category.py           # Category table (name, description, icon)
-│   │   │   ├── review.py             # ReviewTemplate table (shop_id, category_id, text)
-│   │   │   └── review_session.py     # ReviewSession (session_token, timestamps)
+│   │   │   ├── admin.py              # Admin collection schema docs
+│   │   │   ├── shop.py               # Shop collection schema docs
+│   │   │   ├── category.py           # Category collection schema docs
+│   │   │   ├── review.py             # ReviewTemplate collection schema docs
+│   │   │   └── review_session.py     # ReviewSession collection schema docs
 │   │   ├── schemas/                  # Pydantic request/response schemas
 │   │   ├── routers/
 │   │   │   ├── auth.py               # /api/auth/login, /api/auth/me
@@ -92,9 +91,7 @@ OutReach_System/
 │   │   │   └── deps.py               # JWT bearer token dependency
 │   │   ├── services/
 │   │   │   └── qr_service.py         # QR code data URI generator
-│   │   └── main.py                   # FastAPI app entry point with CORS
-│   ├── data/
-│   │   └── review_app.db             # SQLite database file
+│   │   └── main.py                   # FastAPI app entry point with CORS & MongoDB lifespan
 │   ├── seed.py                       # Idempotent seeder (1 Admin, 1 Shop, 8 Categories, 80 Reviews)
 │   ├── test_api.py                   # Automated API test suite (16 tests)
 │   └── requirements.txt              # Backend Python dependencies
@@ -275,7 +272,7 @@ python test_api.py
 
 - **No AI/LLM generation** — all reviews are prewritten templates
 - **No browser automation** — no Selenium, Playwright, or DOM injection on Google
-- **No PostgreSQL** — SQLite only (`backend/data/review_app.db`)
+- **Database** — MongoDB Atlas cloud database via PyMongo (with automatic indexes)
 - **No customer accounts** — anonymous session-based tracking only
 - **No SMS/WhatsApp** — QR scan is the only entry point
 - **Reviews are never deleted** globally when a student selects one; session-based tracking ensures unlimited reuse

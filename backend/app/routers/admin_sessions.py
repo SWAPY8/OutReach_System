@@ -1,9 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from pymongo.database import Database
 from app.database.database import get_db
-from app.models.admin import Admin
-from app.models.review_session import ReviewSession
 from app.schemas.session import SessionDetailResponse
 from app.routers.deps import get_current_admin
 
@@ -11,23 +9,37 @@ router = APIRouter(prefix="/api/admin/sessions", tags=["admin-sessions"])
 
 @router.get("", response_model=List[SessionDetailResponse])
 def get_sessions(
-    current_admin: Admin = Depends(get_current_admin),
-    db: Session = Depends(get_db)
+    current_admin: dict = Depends(get_current_admin),
+    db: Database = Depends(get_db)
 ):
-    sessions = db.query(ReviewSession).order_by(ReviewSession.created_at.desc()).limit(100).all()
+    sessions = list(db.review_sessions.find().sort("created_at", -1).limit(100))
     results = []
     for s in sessions:
+        # Look up related shop
+        shop = db.shops.find_one({"_id": s["shop_id"]}) if s.get("shop_id") else None
+        shop_name = shop["name"] if shop else "Unknown"
+        
+        # Look up related review and category
+        review_text = None
+        category_name = None
+        if s.get("selected_review_id"):
+            review = db.review_templates.find_one({"_id": s["selected_review_id"]})
+            if review:
+                review_text = review["review_text"]
+                category = db.categories.find_one({"_id": review["category_id"]}) if review.get("category_id") else None
+                category_name = category["name"] if category else None
+        
         results.append(SessionDetailResponse(
-            id=s.id,
-            session_token=s.session_token,
-            shop_id=s.shop_id,
-            shop_name=s.shop.name if s.shop else "Unknown",
-            review_id=s.selected_review_id,
-            review_text=s.selected_review.review_text if s.selected_review else None,
-            category_name=s.selected_review.category.name if (s.selected_review and s.selected_review.category) else None,
-            selected_at=s.selected_at,
-            copied_at=s.copied_at,
-            redirected_at=s.redirected_at,
-            created_at=s.created_at
+            id=str(s["_id"]),
+            session_token=s["session_token"],
+            shop_id=str(s["shop_id"]),
+            shop_name=shop_name,
+            review_id=str(s["selected_review_id"]) if s.get("selected_review_id") else None,
+            review_text=review_text,
+            category_name=category_name,
+            selected_at=s.get("selected_at"),
+            copied_at=s.get("copied_at"),
+            redirected_at=s.get("redirected_at"),
+            created_at=s["created_at"]
         ))
     return results

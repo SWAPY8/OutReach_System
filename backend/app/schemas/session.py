@@ -6,32 +6,26 @@ class SessionCreate(BaseModel):
     qr_token: str
 
 class SessionSelectRequest(BaseModel):
-    review_id: int
+    review_id: str
 
 class SessionResponse(BaseModel):
     session_token: str
-    shop_id: int
-    selected_review_id: Optional[int] = None
+    shop_id: str
+    selected_review_id: Optional[str] = None
     selected_at: Optional[datetime] = None
     copied_at: Optional[datetime] = None
     redirected_at: Optional[datetime] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 class SessionDetailResponse(BaseModel):
-    id: int
+    id: str
     session_token: str
-    shop_id: int
+    shop_id: str
     shop_name: str
-    review_id: Optional[int] = None
+    review_id: Optional[str] = None
     review_text: Optional[str] = None
     category_name: Optional[str] = None
     selected_at: Optional[datetime] = None
     copied_at: Optional[datetime] = None
     redirected_at: Optional[datetime] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True

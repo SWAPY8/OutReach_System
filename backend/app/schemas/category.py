@@ -17,10 +17,7 @@ class CategoryUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 class CategoryResponse(CategoryBase):
-    id: int
+    id: str
     is_active: bool
     created_at: datetime
     review_count: Optional[int] = 0
-
-    class Config:
-        from_attributes = True

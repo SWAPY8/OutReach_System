@@ -4,32 +4,40 @@ import sys
 # Ensure current directory is on python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from app.database.database import SessionLocal, Base, engine
-from app.models.admin import Admin
-from app.models.shop import Shop
-from app.models.category import Category
-from app.models.review import ReviewTemplate
+from app.database.database import get_database, ensure_indexes, close_connection
 from app.core.security import hash_password
+from datetime import datetime, timezone
 
 def seed_database():
-    print("Initializing database tables...")
-    Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
+    print("Connecting to MongoDB...")
+    db = get_database()
+    
+    # Verify connectivity
+    db.command("ping")
+    print("MongoDB connection successful.")
+    
+    # Ensure indexes exist
+    ensure_indexes()
+    print("Indexes verified.")
 
     try:
         # 1. Seed Admin
         admin_email = "admin@example.com"
-        admin = db.query(Admin).filter(Admin.email == admin_email).first()
+        admin = db.admins.find_one({"email": admin_email})
         if not admin:
-            admin = Admin(
-                name="Dhankranti Admin",
-                email=admin_email,
-                password_hash=hash_password("Admin@123")
-            )
-            db.add(admin)
+            admin_doc = {
+                "name": "Dhankranti Admin",
+                "email": admin_email,
+                "password_hash": hash_password("Admin@123"),
+                "created_at": datetime.now(timezone.utc)
+            }
+            db.admins.insert_one(admin_doc)
             print("Created default admin: admin@example.com / Admin@123")
         else:
-            admin.name = "Dhankranti Admin"
+            db.admins.update_one(
+                {"_id": admin["_id"]},
+                {"$set": {"name": "Dhankranti Admin"}}
+            )
             print("Admin already exists (updated display name).")
 
         # 2. Seed Dhankranti Demo Shop
@@ -40,46 +48,58 @@ def seed_database():
             "&ludocid=8701389214391986374&lsig=AB86z5XloSRd8OQU2a74Jay27TVo#lrd=0x3bc2c747e4044c15:0x78c18b63783fe8c6,3"
         )
 
-        shop = db.query(Shop).filter(Shop.slug == "dhankranti").first()
+        now = datetime.now(timezone.utc)
+        shop = db.shops.find_one({"slug": "dhankranti"})
         if not shop:
             # Check if an existing primary shop exists
-            shop = db.query(Shop).first()
+            shop = db.shops.find_one()
             if shop:
-                shop.name = "Dhankranti Share Market Classes"
-                shop.slug = "dhankranti"
-                shop.tagline = "Share Market & Trading Education"
-                shop.review_url = google_review_url
-                shop.qr_token = "dhankranti"
-                shop.is_active = True
+                db.shops.update_one(
+                    {"_id": shop["_id"]},
+                    {"$set": {
+                        "name": "Dhankranti Share Market Classes",
+                        "slug": "dhankranti",
+                        "tagline": "Share Market & Trading Education",
+                        "review_url": google_review_url,
+                        "qr_token": "dhankranti",
+                        "is_active": True,
+                        "updated_at": now
+                    }}
+                )
+                shop = db.shops.find_one({"_id": shop["_id"]})
                 print("Updated existing primary shop to Dhankranti.")
             else:
-                shop = Shop(
-                    name="Dhankranti Share Market Classes",
-                    slug="dhankranti",
-                    tagline="Share Market & Trading Education",
-                    review_url=google_review_url,
-                    qr_token="dhankranti",
-                    is_active=True
-                )
-                db.add(shop)
-                db.flush()
+                shop_doc = {
+                    "name": "Dhankranti Share Market Classes",
+                    "slug": "dhankranti",
+                    "tagline": "Share Market & Trading Education",
+                    "review_url": google_review_url,
+                    "qr_token": "dhankranti",
+                    "is_active": True,
+                    "created_at": now,
+                    "updated_at": now
+                }
+                result = db.shops.insert_one(shop_doc)
+                shop_doc["_id"] = result.inserted_id
+                shop = shop_doc
                 print("Created shop: Dhankranti Share Market Classes (qr_token: dhankranti)")
         else:
-            shop.name = "Dhankranti Share Market Classes"
-            shop.tagline = "Share Market & Trading Education"
-            shop.review_url = google_review_url
-            shop.qr_token = "dhankranti"
-            shop.is_active = True
+            db.shops.update_one(
+                {"_id": shop["_id"]},
+                {"$set": {
+                    "name": "Dhankranti Share Market Classes",
+                    "tagline": "Share Market & Trading Education",
+                    "review_url": google_review_url,
+                    "qr_token": "dhankranti",
+                    "is_active": True,
+                    "updated_at": now
+                }}
+            )
+            shop = db.shops.find_one({"_id": shop["_id"]})
 
-        # Ensure a secondary alias shop for backward compatibility if tested previously with a8Xk92LmPq7
-        alias_shop = db.query(Shop).filter(Shop.qr_token == "a8Xk92LmPq7").first()
-        if alias_shop and alias_shop.id != shop.id:
-            alias_shop.name = "Dhankranti Share Market Classes"
-            alias_shop.tagline = "Share Market & Trading Education"
-            alias_shop.review_url = google_review_url
-            alias_shop.is_active = True
+        shop_id = shop["_id"]
 
-        # 3. Clean up non-Dhankranti categories if present to ensure EXACTLY 8 categories
+        # 3. Seed 8 categories and 10 reviews each
         target_categories = [
             {
                 "name": "Teaching Quality",
@@ -221,62 +241,71 @@ def seed_database():
 
         target_cat_names = [c["name"] for c in target_categories]
 
-        # Deactivate or delete old categories not in the 8 target categories
-        old_categories = db.query(Category).all()
+        # Remove old categories not in the 8 target categories
+        old_categories = list(db.categories.find())
         for oc in old_categories:
-            if oc.name not in target_cat_names:
-                # Remove review templates tied to old categories
-                db.query(ReviewTemplate).filter(ReviewTemplate.category_id == oc.id).delete()
-                db.delete(oc)
-        db.flush()
+            if oc["name"] not in target_cat_names:
+                db.review_templates.delete_many({"category_id": oc["_id"]})
+                db.categories.delete_one({"_id": oc["_id"]})
 
         # Seed the 8 categories and 10 reviews each
         total_reviews_seeded = 0
         for cat_info in target_categories:
-            cat = db.query(Category).filter(Category.name == cat_info["name"]).first()
+            cat = db.categories.find_one({"name": cat_info["name"]})
             if not cat:
-                cat = Category(
-                    name=cat_info["name"],
-                    description=cat_info["description"],
-                    icon=cat_info["icon"],
-                    is_active=True
-                )
-                db.add(cat)
-                db.flush()
-                print(f"Created category: {cat.name}")
+                cat_doc = {
+                    "name": cat_info["name"],
+                    "description": cat_info["description"],
+                    "icon": cat_info["icon"],
+                    "is_active": True,
+                    "created_at": now
+                }
+                result = db.categories.insert_one(cat_doc)
+                cat_doc["_id"] = result.inserted_id
+                cat = cat_doc
+                print(f"Created category: {cat['name']}")
             else:
-                cat.description = cat_info["description"]
-                cat.icon = cat_info["icon"]
-                cat.is_active = True
+                db.categories.update_one(
+                    {"_id": cat["_id"]},
+                    {"$set": {
+                        "description": cat_info["description"],
+                        "icon": cat_info["icon"],
+                        "is_active": True
+                    }}
+                )
+
+            cat_id = cat["_id"]
 
             # Clear any outdated reviews for this category & shop to avoid duplicates
-            db.query(ReviewTemplate).filter(
-                ReviewTemplate.shop_id == shop.id,
-                ReviewTemplate.category_id == cat.id
-            ).delete()
+            db.review_templates.delete_many({
+                "shop_id": shop_id,
+                "category_id": cat_id
+            })
 
             # Seed 10 reviews
+            review_docs = []
             for rev_text in cat_info["reviews"]:
-                rev = ReviewTemplate(
-                    shop_id=shop.id,
-                    category_id=cat.id,
-                    review_text=rev_text,
-                    is_active=True
-                )
-                db.add(rev)
-                total_reviews_seeded += 1
+                review_docs.append({
+                    "shop_id": shop_id,
+                    "category_id": cat_id,
+                    "review_text": rev_text,
+                    "is_active": True,
+                    "created_at": now,
+                    "updated_at": now
+                })
+            if review_docs:
+                db.review_templates.insert_many(review_docs)
+                total_reviews_seeded += len(review_docs)
 
-        db.commit()
         print(f"Dhankranti seed completed! Exactly {len(target_categories)} categories and {total_reviews_seeded} review templates.")
-        print(f"Shop: {shop.name} (QR Token: {shop.qr_token})")
-        print(f"Customer URL: http://localhost:5173/r/{shop.qr_token}")
+        print(f"Shop: {shop['name']} (QR Token: {shop.get('qr_token', 'dhankranti')})")
+        print(f"Customer URL: http://localhost:5173/r/{shop.get('qr_token', 'dhankranti')}")
 
     except Exception as e:
-        db.rollback()
         print(f"Error seeding database: {e}")
         raise e
     finally:
-        db.close()
+        close_connection()
 
 if __name__ == "__main__":
     seed_database()

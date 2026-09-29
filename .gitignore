@@ -36,7 +36,7 @@ wheels/
 *.db
 *.sqlite
 *.sqlite3
-backend/data/*.db
+backend/data/
 
 # Node.js & Frontend Build
 frontend/node_modules/

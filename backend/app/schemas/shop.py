@@ -17,7 +17,7 @@ class ShopUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 class ShopResponse(ShopBase):
-    id: int
+    id: str
     slug: str
     qr_token: str
     customer_url: str
@@ -27,11 +27,8 @@ class ShopResponse(ShopBase):
     total_reviews: Optional[int] = 0
     total_sessions: Optional[int] = 0
 
-    class Config:
-        from_attributes = True
-
 class ShopQRResponse(BaseModel):
-    shop_id: int
+    shop_id: str
     shop_name: str
     qr_token: str
     customer_url: str

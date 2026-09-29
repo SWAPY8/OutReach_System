@@ -52,9 +52,12 @@ if not exist "backend\data" (
     mkdir "backend\data"
 )
 
-if not exist "backend\data\review_app.db" (
-    echo [*] Database not found. Seeding initial data (Admin, Shop, Categories, Reviews)...
+if not exist "backend\data\.seeded" (
+    echo [*] Initial setup: Seeding initial data (Admin, Shop, Categories, Reviews)...
     call "backend\venv\Scripts\python.exe" backend\seed.py
+    if !ERRORLEVEL! equ 0 (
+        type nul > "backend\data\.seeded"
+    )
 )
 
 :: 5. Setup Frontend dependencies if missing

@@ -1,8 +1,8 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.database.database import Base, engine
-import app.models  # ensure models are registered
+from app.database.database import ensure_indexes, close_connection, get_database
 from app.routers import (
     auth,
     admin_shops,
@@ -13,14 +13,27 @@ from app.routers import (
     public_review
 )
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifecycle: initialize MongoDB indexes on startup, close connection on shutdown."""
+    # Startup: verify MongoDB connectivity and create indexes
+    db = get_database()
+    db.command("ping")  # Verify connectivity
+    ensure_indexes()
+    print(f"[MongoDB] Connected to database: {settings.MONGODB_DATABASE}")
+    yield
+    # Shutdown: close MongoDB client
+    close_connection()
+    print("[MongoDB] Connection closed.")
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    version="1.0.0",
+    version="2.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # CORS configuration
@@ -51,7 +64,8 @@ app.include_router(public_review.router)
 def root():
     return {
         "app": settings.PROJECT_NAME,
-        "version": "1.0.0",
+        "version": "2.0.0",
+        "database": "MongoDB Atlas",
         "status": "online",
         "docs": "/docs"
     }

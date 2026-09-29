@@ -124,12 +124,27 @@ input, textarea, select {
   width: 100%;
   max-width: 440px;
   min-height: 100vh;
-  background-color: var(--bg-card);
+  background-color: #ffffff;
+  color: #0f172a;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow-x: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+
+  /* Scoped crisp brand tokens to protect customer flow from dark-mode text clashes */
+  --text-main: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --bg-card: #ffffff;
+  --bg-subtle: #f8fafc;
+  --border: #e2e8f0;
+  --primary: #1e3a8a;
+  --primary-hover: #172554;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --accent: #059669;
 }
 
 @media (min-width: 500px) {
@@ -164,7 +179,7 @@ input, textarea, select {
 .dhankranti-brand-title {
   font-size: 19px;
   font-weight: 800;
-  color: var(--text-main);
+  color: #0f172a;
   letter-spacing: -0.01em;
   line-height: 1.25;
 }
@@ -256,7 +271,7 @@ input, textarea, select {
 .dhankranti-cat-label {
   font-size: 13.5px;
   font-weight: 700;
-  color: var(--text-main);
+  color: #0f172a;
   line-height: 1.25;
 }
 
@@ -1029,56 +1044,6 @@ input, textarea, select {
 
 [data-theme='dark'] .customer-mobile-wrapper {
   background-color: var(--bg-body);
-}
-
-[data-theme='dark'] .customer-card {
-  background-color: var(--bg-card);
-  border-color: var(--border);
-}
-
-[data-theme='dark'] .customer-brand-header {
-  border-bottom-color: var(--border);
-}
-
-[data-theme='dark'] .customer-step-title {
-  color: var(--text-main);
-}
-
-[data-theme='dark'] .category-card-btn {
-  background-color: var(--bg-subtle);
-  border-color: var(--border);
-}
-
-[data-theme='dark'] .category-card-btn:hover {
-  background-color: #1c2b4c;
-  border-color: var(--primary);
-}
-
-[data-theme='dark'] .category-card-name {
-  color: var(--text-main);
-}
-
-[data-theme='dark'] .category-card-desc {
-  color: var(--text-muted);
-}
-
-[data-theme='dark'] .dhankranti-review-card {
-  background-color: var(--bg-subtle);
-  border-color: var(--border);
-}
-
-[data-theme='dark'] .dhankranti-review-card:hover {
-  background-color: #1c2b4c;
-  border-color: var(--primary);
-}
-
-[data-theme='dark'] .dhankranti-review-card.selected {
-  background-color: #172c5c;
-  border-color: var(--primary);
-}
-
-[data-theme='dark'] .review-card-text {
-  color: var(--text-main);
 }
 
 [data-theme='dark'] .admin-main-content {

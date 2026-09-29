@@ -27,7 +27,7 @@ graph TD
     Client["Student Mobile / Admin Desktop"] -->|"Vite Dev Server (:5173)"| ReactApp["React 19 Frontend"]
     ReactApp -->|"REST API / Proxy"| FastAPI["FastAPI Backend (:8000)"]
     FastAPI -->|"Bcrypt & PyJWT"| Security["Security & Auth Middleware"]
-    FastAPI -->|"SQLAlchemy 2.0 ORM"| SQLite["SQLite DB: backend/data/review_app.db"]
+    FastAPI -->|"PyMongo 4.x"| MongoDB["MongoDB Atlas Cloud Database"]
     FastAPI -->|"qrcode[pil]"| QRService["QR Code Generation Service"]
 ```
 
@@ -40,7 +40,7 @@ graph TD
 | **Icons** | Lucide React | Pure SVG education-themed icons (graduation-cap, line-chart, etc.) |
 | **QR Library** | qrcode.react | Vector rendering with high error correction (`H`) and PNG download |
 | **Backend API** | Python 3.13 + FastAPI | Asynchronous REST API with OpenAPI docs |
-| **ORM / Database** | SQLAlchemy 2.0 + SQLite | File-based at `backend/data/review_app.db` |
+| **Database** | MongoDB Atlas + PyMongo | Cloud NoSQL with automatic unique and performance indexes |
 | **Authentication** | PyJWT + Bcrypt | Secure hashing, Bearer tokens |
 
 ---
@@ -50,7 +50,7 @@ graph TD
 ```mermaid
 erDiagram
     Admin {
-        int id PK
+        ObjectId _id PK
         string name
         string email UK
         string password_hash
@@ -58,7 +58,7 @@ erDiagram
     }
 
     Shop {
-        int id PK
+        ObjectId _id PK
         string name
         string slug UK
         string tagline
@@ -70,7 +70,7 @@ erDiagram
     }
 
     Category {
-        int id PK
+        ObjectId _id PK
         string name UK
         string description
         string icon
@@ -79,9 +79,9 @@ erDiagram
     }
 
     ReviewTemplate {
-        int id PK
-        int shop_id FK
-        int category_id FK
+        ObjectId _id PK
+        ObjectId shop_id Ref
+        ObjectId category_id Ref
         text review_text
         boolean is_active
         datetime created_at
@@ -89,10 +89,10 @@ erDiagram
     }
 
     ReviewSession {
-        int id PK
+        ObjectId _id PK
         string session_token UK
-        int shop_id FK
-        int selected_review_id FK
+        ObjectId shop_id Ref
+        ObjectId selected_review_id Ref
         datetime selected_at
         datetime copied_at
         datetime redirected_at

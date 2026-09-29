@@ -8,13 +8,10 @@ class LoginRequest(BaseModel):
     remember_me: Optional[bool] = False
 
 class AdminResponse(BaseModel):
-    id: int
+    id: str
     name: str
     email: str
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class Token(BaseModel):
     access_token: str

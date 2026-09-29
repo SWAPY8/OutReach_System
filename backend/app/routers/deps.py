@@ -1,13 +1,14 @@
+from bson import ObjectId
 from fastapi import Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from pymongo.database import Database
 from app.database.database import get_db
 from app.core.security import oauth2_scheme, decode_access_token
-from app.models.admin import Admin
+
 
 def get_current_admin(
     token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-) -> Admin:
+    db: Database = Depends(get_db)
+) -> dict:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate admin credentials",
@@ -22,11 +23,11 @@ def get_current_admin(
         raise credentials_exception
     
     try:
-        admin_id_int = int(admin_id)
-    except ValueError:
+        oid = ObjectId(admin_id)
+    except Exception:
         raise credentials_exception
         
-    admin = db.query(Admin).filter(Admin.id == admin_id_int).first()
+    admin = db.admins.find_one({"_id": oid})
     if admin is None:
         raise credentials_exception
     return admin
