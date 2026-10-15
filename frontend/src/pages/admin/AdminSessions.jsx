@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api/client';
+import { getErrorMessage } from '../../utils/errorHandler';
+import { Toast } from '../../components/common/Toast';
 import { History, CheckCircle2, ExternalLink, Copy, Clock, RefreshCw, Info, X } from 'lucide-react';
 
 export const AdminSessions = () => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState({ message: '', type: 'error' });
   const [detailModalSession, setDetailModalSession] = useState(null);
 
   const fetchSessions = async () => {
@@ -14,6 +17,7 @@ export const AdminSessions = () => {
       setSessions(res.data);
     } catch (err) {
       console.error('Failed to load sessions:', err);
+      setToast({ message: getErrorMessage(err, 'Failed to load sessions.'), type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -55,6 +59,15 @@ export const AdminSessions = () => {
 
   return (
     <div>
+      {/* Toast Notification */}
+      {toast.message && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ message: '', type: 'error' })}
+        />
+      )}
+
       <div className="admin-page-header">
         <div>
           <h1 className="admin-page-title">Review Sessions</h1>
@@ -65,7 +78,7 @@ export const AdminSessions = () => {
 
         <button
           onClick={fetchSessions}
-          className="btn-secondary-outline"
+          className="btn-dhankranti-secondary"
           id="refresh-sessions-btn"
           style={{ height: '40px', padding: '0 16px', width: 'auto' }}
         >
@@ -74,7 +87,7 @@ export const AdminSessions = () => {
         </button>
       </div>
 
-      {/* Sessions Table: Shop | Category | Selected Review | Selected | Copied | Opened | Time */}
+      {/* Sessions Table */}
       <div className="admin-card">
         <div className="admin-table-container">
           <table className="admin-table">
@@ -99,15 +112,15 @@ export const AdminSessions = () => {
                 </tr>
               ) : sessions.length === 0 ? (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', color: '#64748b', padding: '36px' }}>
+                  <td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '36px' }}>
                     No customer review sessions recorded yet. Scan a shop QR code to start a session.
                   </td>
                 </tr>
               ) : (
                 sessions.map((sess) => (
                   <tr key={sess.id}>
-                    <td style={{ fontWeight: 600, color: '#0f172a' }}>{sess.shop_name}</td>
-                    <td style={{ color: '#1e3a8a', fontWeight: 600, fontSize: '13px' }}>
+                    <td style={{ fontWeight: 700, color: 'var(--text-main)' }}>{sess.shop_name}</td>
+                    <td style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '13px' }}>
                       {sess.category_name || '—'}
                     </td>
                     <td>
@@ -115,19 +128,19 @@ export const AdminSessions = () => {
                         <div
                           style={{
                             fontSize: '13px',
-                            color: '#334155',
+                            color: 'var(--text-secondary)',
                             display: '-webkit-box',
                             WebkitLineClamp: 2,
                             WebkitBoxOrient: 'vertical',
                             overflow: 'hidden',
-                            lineHeight: 1.4,
+                            lineHeight: 1.45,
                           }}
                           title={sess.review_text}
                         >
                           "{sess.review_text}"
                         </div>
                       ) : (
-                        <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '12px' }}>
+                        <span style={{ color: 'var(--text-light)', fontStyle: 'italic', fontSize: '12px' }}>
                           Browsing categories...
                         </span>
                       )}
@@ -141,16 +154,17 @@ export const AdminSessions = () => {
                             gap: '4px',
                             padding: '3px 8px',
                             borderRadius: '12px',
-                            backgroundColor: '#eff6ff',
-                            color: '#1e40af',
+                            backgroundColor: 'var(--primary-light)',
+                            color: 'var(--primary)',
                             fontSize: '12px',
-                            fontWeight: 600,
+                            fontWeight: 700,
+                            border: '1px solid var(--primary-border)',
                           }}
                         >
                           ✓ Selected
                         </span>
                       ) : (
-                        <span style={{ color: '#94a3b8' }}>—</span>
+                        <span style={{ color: 'var(--text-light)' }}>—</span>
                       )}
                     </td>
                     <td style={{ textAlign: 'center' }}>
@@ -162,16 +176,17 @@ export const AdminSessions = () => {
                             gap: '4px',
                             padding: '3px 8px',
                             borderRadius: '12px',
-                            backgroundColor: '#ecfdf5',
-                            color: '#059669',
+                            backgroundColor: 'var(--accent-light)',
+                            color: 'var(--accent)',
                             fontSize: '12px',
-                            fontWeight: 600,
+                            fontWeight: 700,
+                            border: '1px solid var(--accent-border)',
                           }}
                         >
                           ✓ Copied
                         </span>
                       ) : (
-                        <span style={{ color: '#94a3b8' }}>—</span>
+                        <span style={{ color: 'var(--text-light)' }}>—</span>
                       )}
                     </td>
                     <td style={{ textAlign: 'center' }}>
@@ -183,19 +198,20 @@ export const AdminSessions = () => {
                             gap: '4px',
                             padding: '3px 8px',
                             borderRadius: '12px',
-                            backgroundColor: '#f0fdf4',
-                            color: '#16a34a',
+                            backgroundColor: 'var(--success-light)',
+                            color: 'var(--success)',
                             fontSize: '12px',
-                            fontWeight: 600,
+                            fontWeight: 700,
+                            border: '1px solid var(--success-border)',
                           }}
                         >
                           ✓ Opened
                         </span>
                       ) : (
-                        <span style={{ color: '#94a3b8' }}>—</span>
+                        <span style={{ color: 'var(--text-light)' }}>—</span>
                       )}
                     </td>
-                    <td style={{ textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#475569' }}>
+                    <td style={{ textAlign: 'center', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>
                       {formatTime(sess.created_at || sess.selected_at)}
                     </td>
                     <td style={{ textAlign: 'right' }}>
@@ -223,23 +239,24 @@ export const AdminSessions = () => {
             <div className="admin-modal-header">
               <h2 className="admin-modal-title">Session Audit Details</h2>
               <button onClick={() => setDetailModalSession(null)} className="admin-modal-close-btn">
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '14px' }}>
               <div>
-                <strong style={{ color: '#64748b', fontSize: '12px', display: 'block', marginBottom: '4px' }}>
+                <strong style={{ color: 'var(--text-muted)', fontSize: '11.5px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>
                   ANONYMOUS SESSION TOKEN
                 </strong>
                 <code
                   style={{
-                    backgroundColor: '#f1f5f9',
-                    padding: '6px 10px',
-                    borderRadius: '6px',
+                    backgroundColor: 'var(--glass-bg-subtle)',
+                    border: '1px solid var(--glass-border-subtle)',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
                     display: 'block',
                     fontSize: '12px',
-                    color: '#0f172a',
+                    color: 'var(--text-main)',
                     wordBreak: 'break-all',
                   }}
                 >
@@ -248,26 +265,26 @@ export const AdminSessions = () => {
               </div>
 
               <div>
-                <strong style={{ color: '#64748b', fontSize: '12px', display: 'block', marginBottom: '4px' }}>
+                <strong style={{ color: 'var(--text-muted)', fontSize: '11.5px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>
                   SHOP & CATEGORY
                 </strong>
-                <span style={{ color: '#0f172a', fontWeight: 600 }}>
+                <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>
                   {detailModalSession.shop_name} &bull; {detailModalSession.category_name || 'No Category'}
                 </span>
               </div>
 
               {detailModalSession.review_text && (
                 <div>
-                  <strong style={{ color: '#64748b', fontSize: '12px', display: 'block', marginBottom: '4px' }}>
+                  <strong style={{ color: 'var(--text-muted)', fontSize: '11.5px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>
                     SELECTED REVIEW
                   </strong>
                   <div
                     style={{
-                      padding: '10px 12px',
-                      backgroundColor: '#f8fafc',
-                      borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
-                      color: '#334155',
+                      padding: '12px 14px',
+                      backgroundColor: 'var(--glass-bg-subtle)',
+                      borderRadius: '10px',
+                      border: '1px solid var(--glass-border-subtle)',
+                      color: 'var(--text-secondary)',
                       lineHeight: 1.5,
                       fontStyle: 'italic',
                     }}
@@ -277,38 +294,38 @@ export const AdminSessions = () => {
                 </div>
               )}
 
-              <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px' }}>
+              <div style={{ borderTop: '1px solid var(--glass-border-subtle)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#64748b' }}>Session Created:</span>
-                  <span style={{ fontWeight: 600, color: '#0f172a' }}>{formatDateTime(detailModalSession.created_at)}</span>
+                  <span style={{ color: 'var(--text-muted)' }}>Session Created:</span>
+                  <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{formatDateTime(detailModalSession.created_at)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#64748b' }}>Review Selected:</span>
-                  <span style={{ fontWeight: 600, color: detailModalSession.selected_at ? '#1e40af' : '#94a3b8' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Review Selected:</span>
+                  <span style={{ fontWeight: 600, color: detailModalSession.selected_at ? 'var(--primary)' : 'var(--text-light)' }}>
                     {formatDateTime(detailModalSession.selected_at)}
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#64748b' }}>Clipboard Copied:</span>
-                  <span style={{ fontWeight: 600, color: detailModalSession.copied_at ? '#059669' : '#94a3b8' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Clipboard Copied:</span>
+                  <span style={{ fontWeight: 600, color: detailModalSession.copied_at ? 'var(--accent)' : 'var(--text-light)' }}>
                     {formatDateTime(detailModalSession.copied_at)}
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#64748b' }}>Google Redirected:</span>
-                  <span style={{ fontWeight: 600, color: detailModalSession.redirected_at ? '#16a34a' : '#94a3b8' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Google Redirected:</span>
+                  <span style={{ fontWeight: 600, color: detailModalSession.redirected_at ? 'var(--success)' : 'var(--text-light)' }}>
                     {formatDateTime(detailModalSession.redirected_at)}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="admin-modal-footer" style={{ marginTop: '20px' }}>
+            <div className="admin-modal-footer" style={{ marginTop: '22px' }}>
               <button
                 type="button"
                 onClick={() => setDetailModalSession(null)}
-                className="btn-primary-blue"
-                style={{ width: '100%', height: '40px' }}
+                className="btn-dhankranti-primary"
+                style={{ width: '100%', height: '42px' }}
               >
                 Close
               </button>

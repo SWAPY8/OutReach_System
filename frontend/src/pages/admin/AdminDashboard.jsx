@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/client';
+import { getErrorMessage } from '../../utils/errorHandler';
+import { Toast } from '../../components/common/Toast';
 import {
   Store,
   Layers,
   MessageSquareText,
   History,
-  ExternalLink,
   ArrowRight,
   TrendingUp,
-  CheckCircle2
+  Sparkles
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -22,6 +23,7 @@ export const AdminDashboard = () => {
   });
   const [recentSessions, setRecentSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState({ message: '', type: 'error' });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,6 +36,7 @@ export const AdminDashboard = () => {
         setRecentSessions(sessRes.data.slice(0, 5));
       } catch (err) {
         console.error('Failed to load dashboard data:', err);
+        setToast({ message: getErrorMessage(err, 'Failed to load dashboard data.'), type: 'error' });
       } finally {
         setLoading(false);
       }
@@ -44,7 +47,7 @@ export const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: '40px', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ padding: '60px', display: 'flex', justifyContent: 'center' }}>
         <div className="spinner"></div>
       </div>
     );
@@ -52,6 +55,15 @@ export const AdminDashboard = () => {
 
   return (
     <div>
+      {/* Toast Notification */}
+      {toast.message && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ message: '', type: 'error' })}
+        />
+      )}
+
       {/* Top Greeting */}
       <div className="admin-page-header">
         <div>
@@ -62,7 +74,7 @@ export const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* 4 Stat Cards matching prompt */}
+      {/* 4 Stat Cards */}
       <div className="stats-cards-grid">
         {/* Active Shops */}
         <div className="stat-card">
@@ -86,7 +98,7 @@ export const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Review Templates (80) */}
+        {/* Review Templates */}
         <div className="stat-card">
           <div className="stat-icon-wrapper stat-icon-indigo">
             <MessageSquareText size={24} />
@@ -109,7 +121,7 @@ export const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Recent Activity / Sessions Table matching prompt */}
+      {/* Recent Activity / Sessions Table */}
       <div className="admin-card">
         <div className="admin-card-header">
           <h2 className="admin-card-title">Recent Student Review Activity</h2>
@@ -118,10 +130,10 @@ export const AdminDashboard = () => {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
+              gap: '6px',
               fontSize: '13.5px',
               fontWeight: 700,
-              color: '#1e3a8a',
+              color: 'var(--text-link)',
             }}
           >
             <span>View All Sessions</span>
@@ -143,50 +155,51 @@ export const AdminDashboard = () => {
             <tbody>
               {recentSessions.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', color: '#64748b', padding: '30px' }}>
+                  <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>
                     No customer review sessions recorded yet. Scan a QR code to record activity.
                   </td>
                 </tr>
               ) : (
                 recentSessions.map((sess) => (
                   <tr key={sess.id}>
-                    <td style={{ fontWeight: 700 }}>{sess.shop_name}</td>
-                    <td style={{ color: '#475569', fontWeight: 600 }}>{sess.category_name || '—'}</td>
+                    <td style={{ fontWeight: 700, color: 'var(--text-main)' }}>{sess.shop_name}</td>
+                    <td style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{sess.category_name || '—'}</td>
                     <td>
                       {sess.review_text ? (
                         <div
                           style={{
-                            fontSize: '13px',
-                            color: '#334155',
+                            fontSize: '13.5px',
+                            color: 'var(--text-secondary)',
                             display: '-webkit-box',
                             WebkitLineClamp: 2,
                             WebkitBoxOrient: 'vertical',
                             overflow: 'hidden',
+                            lineHeight: 1.45,
                           }}
                           title={sess.review_text}
                         >
                           "{sess.review_text}"
                         </div>
                       ) : (
-                        <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Pending selection</span>
+                        <span style={{ color: 'var(--text-light)', fontStyle: 'italic' }}>Pending selection</span>
                       )}
                     </td>
                     <td>
                       {sess.redirected_at ? (
                         <span className="badge badge-active">✓ Opened Google</span>
                       ) : sess.copied_at ? (
-                        <span className="badge" style={{ backgroundColor: '#dcfce7', color: '#166534' }}>
+                        <span className="badge" style={{ backgroundColor: 'var(--success-light)', color: 'var(--success)' }}>
                           ✓ Copied
                         </span>
                       ) : sess.selected_at ? (
-                        <span className="badge" style={{ backgroundColor: '#eff6ff', color: '#1e40af' }}>
+                        <span className="badge" style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}>
                           ✓ Selected
                         </span>
                       ) : (
-                        <span style={{ color: '#94a3b8' }}>Scanned</span>
+                        <span style={{ color: 'var(--text-light)' }}>Scanned</span>
                       )}
                     </td>
-                    <td style={{ color: '#64748b', fontSize: '13px' }}>
+                    <td style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
                       {new Date(sess.created_at).toLocaleTimeString('en-US', {
                         hour: '2-digit',
                         minute: '2-digit',

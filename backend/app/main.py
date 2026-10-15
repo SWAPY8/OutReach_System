@@ -36,20 +36,44 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from fastapi import status, Request
+
 # CORS configuration
 origins = settings.cors_origins_list
 if "*" not in origins:
-    # also ensure 127.0.0.1 and localhost variations are included
-    origins.extend(["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"])
+    # also ensure 127.0.0.1 and localhost variations and render frontend are included
+    origins.extend([
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "https://outreach-system-frontend.onrender.com",
+        "https://outreach-review-system.onrender.com"
+    ])
     origins = list(set(origins))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"https://.*\.onrender\.com|http://localhost(:\d+)?|http://127\.0\.0\.1(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = []
+    for err in exc.errors():
+        field = " -> ".join(str(loc) for loc in err.get("loc", []) if loc != "body")
+        msg = err.get("msg", "Validation error")
+        errors.append(f"{field}: {msg}" if field else msg)
+    readable_msg = "; ".join(errors) if errors else "Invalid request data."
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": readable_msg, "errors": exc.errors()}
+    )
 
 # Include Routers
 app.include_router(auth.router)

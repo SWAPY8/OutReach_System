@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../../api/client';
+import { useTheme } from '../../context/ThemeContext';
 import { getCategoryIcon } from '../../utils/iconMap';
 import {
   ChevronLeft,
@@ -8,12 +9,16 @@ import {
   ExternalLink,
   CheckCircle2,
   AlertCircle,
-  Check
+  Check,
+  Sun,
+  Moon,
+  Sparkles
 } from 'lucide-react';
 import logoImg from '../../assets/logo.png';
 
 export const CustomerReviewPage = () => {
   const { qrToken } = useParams();
+  const { isDark, toggleTheme } = useTheme();
 
   // Shop & Category Data
   const [shop, setShop] = useState(null);
@@ -50,7 +55,7 @@ export const CustomerReviewPage = () => {
       } catch (err) {
         console.error('Failed to load Dhankranti reviews:', err);
         if (err.response && err.response.data && err.response.data.detail) {
-          setError(err.response.data.detail);
+          setError(typeof err.response.data.detail === 'string' ? err.response.data.detail : 'Review link is inactive.');
         } else {
           setError('Sorry, this review link is no longer active. Please ask the Dhankranti staff for assistance.');
         }
@@ -175,7 +180,6 @@ export const CustomerReviewPage = () => {
         }
       }, 350);
     } else {
-      // Clipboard access failed: handle gracefully
       setCopyFailed(true);
     }
   };
@@ -210,8 +214,8 @@ export const CustomerReviewPage = () => {
       <div className="customer-mobile-wrapper">
         <div className="customer-phone-frame" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="spinner"></div>
-          <p style={{ marginTop: '16px', color: '#64748b', fontWeight: 600, fontSize: '14.5px' }}>
-            Loading Dhankranti reviews...
+          <p style={{ marginTop: '16px', color: 'var(--text-muted)', fontWeight: 600, fontSize: '14.5px' }}>
+            Loading reviews...
           </p>
         </div>
       </div>
@@ -222,25 +226,23 @@ export const CustomerReviewPage = () => {
     return (
       <div className="customer-mobile-wrapper">
         <div className="customer-phone-frame" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px', textAlign: 'center' }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#fef2f2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'var(--danger-light)', color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
             <AlertCircle size={28} />
           </div>
-          <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-main)', marginBottom: '8px' }}>
             Review Page Unavailable
           </h2>
-          <p style={{ fontSize: '14px', color: '#64748b', lineHeight: 1.5, marginBottom: '24px' }}>
+          <p style={{ fontSize: '14px', color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '24px' }}>
             {error || 'Sorry, this review link is no longer active.'}
           </p>
           <a
             href="/"
+            className="btn-dhankranti-primary"
             style={{
               padding: '10px 20px',
-              backgroundColor: '#1e3a8a',
-              color: '#ffffff',
               borderRadius: '10px',
               fontWeight: 600,
               fontSize: '14px',
-              textDecoration: 'none',
             }}
           >
             Return to Home
@@ -251,21 +253,43 @@ export const CustomerReviewPage = () => {
   }
 
   // -------------------------------------------------------------
-  // SCREEN 1: Combined Brand Header + 8 Category Cards
+  // SCREEN 1: Combined Brand Header + Category Cards
   // -------------------------------------------------------------
   if (currentStep === 1) {
     return (
       <div className="customer-mobile-wrapper">
         <div className="customer-phone-frame">
           {/* Header with Official Dhankranti Logo & Prompt */}
-          <div className="dhankranti-customer-header">
+          <div className="dhankranti-customer-header" style={{ position: 'relative' }}>
+            {/* Top theme toggle */}
+            <button
+              onClick={toggleTheme}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'var(--glass-bg)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: '10px',
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? <Sun size={17} color="#fbbf24" /> : <Moon size={17} color="var(--primary)" />}
+            </button>
+
             <img
               src={logoImg}
-              alt="Dhankranti Share Market Classes"
+              alt={shop.name}
               className="dhankranti-brand-logo"
             />
-            <h1 className="dhankranti-brand-title">Dhankranti Share Market Classes</h1>
-            <p className="dhankranti-brand-tagline">Share Market & Trading Education</p>
+            <h1 className="dhankranti-brand-title">{shop.name}</h1>
+            <p className="dhankranti-brand-tagline">{shop.tagline || 'Great Service. Better Experience.'}</p>
 
             <div className="dhankranti-experience-prompt">
               <h2 className="prompt-main-question">How was your experience?</h2>
@@ -273,7 +297,7 @@ export const CustomerReviewPage = () => {
             </div>
           </div>
 
-          {/* 8 Category Cards (2-Column Grid) */}
+          {/* Category Cards (2-Column Grid) */}
           <div className="dhankranti-categories-container">
             <div className="dhankranti-categories-grid">
               {categories.map((cat) => (
@@ -302,7 +326,7 @@ export const CustomerReviewPage = () => {
   }
 
   // -------------------------------------------------------------
-  // SCREEN 2: 10 Review Templates Selection
+  // SCREEN 2: Review Templates Selection
   // -------------------------------------------------------------
   if (currentStep === 2) {
     const reviews = selectedCategory?.reviews || [];
@@ -310,17 +334,33 @@ export const CustomerReviewPage = () => {
     return (
       <div className="customer-mobile-wrapper">
         <div className="customer-phone-frame">
-          {/* Top Bar with Back action */}
+          {/* Top Bar with Back action & Theme Toggle */}
           <div className="mobile-nav-bar">
             <button onClick={handleBack} className="mobile-back-action-btn" id="review-list-back-btn">
               <ChevronLeft size={20} />
               <span>Back</span>
             </button>
-            <img
-              src={logoImg}
-              alt="Dhankranti"
-              className="mobile-brand-logo-small"
-            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                onClick={toggleTheme}
+                style={{
+                  background: 'var(--glass-bg)',
+                  border: '1px solid var(--glass-border)',
+                  borderRadius: '8px',
+                  padding: '5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {isDark ? <Sun size={15} color="#fbbf24" /> : <Moon size={15} color="var(--primary)" />}
+              </button>
+              <img
+                src={logoImg}
+                alt="Logo"
+                className="mobile-brand-logo-small"
+              />
+            </div>
           </div>
 
           <div className="review-selection-content">
@@ -341,7 +381,7 @@ export const CustomerReviewPage = () => {
               Choose a review that best matches your experience:
             </p>
 
-            {/* List of 10 fully-clickable review cards */}
+            {/* List of review cards */}
             <div className="reviews-selection-list">
               {reviews.map((rev) => {
                 const isSelected = selectedReview?.id === rev.id;
@@ -378,17 +418,33 @@ export const CustomerReviewPage = () => {
             <ChevronLeft size={20} />
             <span>Choose another review</span>
           </button>
-          <img
-            src={logoImg}
-            alt="Dhankranti"
-            className="mobile-brand-logo-small"
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={toggleTheme}
+              style={{
+                background: 'var(--glass-bg)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: '8px',
+                padding: '5px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {isDark ? <Sun size={15} color="#fbbf24" /> : <Moon size={15} color="var(--primary)" />}
+            </button>
+            <img
+              src={logoImg}
+              alt="Logo"
+              className="mobile-brand-logo-small"
+            />
+          </div>
         </div>
 
         <div className="selected-review-view-container">
           <img
             src={logoImg}
-            alt="Dhankranti Logo"
+            alt="Logo"
             className="dhankranti-selected-brand-badge"
           />
 
@@ -410,7 +466,7 @@ export const CustomerReviewPage = () => {
           {/* Fallback if automatic clipboard access was blocked */}
           {copyFailed && (
             <div style={{ width: '100%', marginBottom: '16px', textAlign: 'left' }}>
-              <p style={{ fontSize: '13px', color: '#b91c1c', fontWeight: 600, marginBottom: '6px' }}>
+              <p style={{ fontSize: '13px', color: 'var(--danger)', fontWeight: 600, marginBottom: '6px' }}>
                 Copy automatically failed. Please copy the text below:
               </p>
               <textarea
@@ -419,11 +475,12 @@ export const CustomerReviewPage = () => {
                 style={{
                   width: '100%',
                   padding: '10px',
-                  borderRadius: '8px',
-                  border: '1.5px solid #cbd5e1',
+                  borderRadius: '10px',
+                  border: '1px solid var(--glass-border)',
                   fontSize: '13.5px',
                   fontFamily: 'inherit',
-                  backgroundColor: '#ffffff',
+                  backgroundColor: 'var(--glass-bg)',
+                  color: 'var(--text-main)',
                 }}
                 onFocus={(e) => e.target.select()}
               />
@@ -435,21 +492,21 @@ export const CustomerReviewPage = () => {
             <div
               style={{
                 width: '100%',
-                backgroundColor: '#fffbeb',
-                border: '1px solid #fde68a',
-                borderRadius: '10px',
+                backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                borderRadius: '12px',
                 padding: '12px 14px',
                 marginBottom: '16px',
                 textAlign: 'left',
                 fontSize: '13px',
-                color: '#92400e',
+                color: '#f59e0b',
               }}
             >
               Google Review page could not be opened automatically. Use the button below:
             </div>
           )}
 
-          {/* Primary Action Buttons matching prompt */}
+          {/* Primary Action Buttons */}
           <div className="dhankranti-action-buttons">
             <button
               id="copy-open-google-btn"
@@ -475,7 +532,7 @@ export const CustomerReviewPage = () => {
                 id="open-google-direct-btn"
                 onClick={handleManualOpenGoogle}
                 className="btn-dhankranti-primary"
-                style={{ backgroundColor: '#059669' }}
+                style={{ backgroundColor: 'var(--accent)' }}
               >
                 <ExternalLink size={18} />
                 <span>Open Google Review</span>

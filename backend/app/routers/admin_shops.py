@@ -70,7 +70,7 @@ def create_shop(
         "tagline": shop_in.tagline.strip() if shop_in.tagline else "Great Service. Better Experience.",
         "review_url": shop_in.review_url.strip(),
         "qr_token": qr_token,
-        "is_active": True,
+        "is_active": shop_in.is_active if shop_in.is_active is not None else True,
         "created_at": now,
         "updated_at": now
     }

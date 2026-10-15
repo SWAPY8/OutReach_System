@@ -4,16 +4,16 @@ from pydantic import BaseModel, Field
 
 class ShopBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=200)
-    tagline: Optional[str] = Field(None, max_length=255)
-    review_url: str = Field(..., min_length=5, max_length=500)
+    tagline: Optional[str] = Field(None, max_length=500)
+    review_url: str = Field(..., min_length=5, max_length=2048)
 
 class ShopCreate(ShopBase):
-    pass
+    is_active: Optional[bool] = True
 
 class ShopUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=2, max_length=200)
-    tagline: Optional[str] = Field(None, max_length=255)
-    review_url: Optional[str] = Field(None, min_length=5, max_length=500)
+    tagline: Optional[str] = Field(None, max_length=500)
+    review_url: Optional[str] = Field(None, min_length=5, max_length=2048)
     is_active: Optional[bool] = None
 
 class ShopResponse(ShopBase):
