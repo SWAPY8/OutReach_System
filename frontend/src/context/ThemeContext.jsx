@@ -11,16 +11,10 @@ export const ThemeProvider = ({ children }) => {
     try {
       const saved = localStorage.getItem('dhankranti-theme');
       if (saved === 'light' || saved === 'dark') return saved;
-      if (
-        typeof window !== 'undefined' &&
-        window.matchMedia &&
-        window.matchMedia('(prefers-color-scheme: dark)').matches
-      ) {
-        return 'dark';
-      }
     } catch (e) {
       console.warn('Failed to access localStorage for theme preference:', e);
     }
+    // Default mode is strictly light unless user explicitly changed it
     return 'light';
   });
 
